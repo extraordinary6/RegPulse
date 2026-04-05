@@ -1,7 +1,7 @@
 // ============================================================================
 // RegPulse Auto-Generated UVM RAL Model
 // Block    : chip_regs_reg_block
-// Generated: 2026-04-05 15:01:36
+// Generated: 2026-04-05 18:27:43
 // ============================================================================
 `ifndef CHIP_REGS_REG_BLOCK_SV
 `define CHIP_REGS_REG_BLOCK_SV

@@ -1,7 +1,7 @@
 /*
  * RegPulse Auto-Generated Register Definitions
  * Block    : chip_regs
- * Generated: 2026-04-05 15:01:36
+ * Generated: 2026-04-05 18:27:43
  */
 #ifndef CHIP_REGS_H
 #define CHIP_REGS_H

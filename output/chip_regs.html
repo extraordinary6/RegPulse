@@ -24,7 +24,7 @@
 </head>
 <body>
   <h1>chip_regs &mdash; Register Map</h1>
-  <p>Generated: 2026-04-05 15:01:36 | Registers: 6 | Address Space: 24 bytes</p>
+  <p>Generated: 2026-04-05 18:27:43 | Registers: 6 | Address Space: 24 bytes</p>
 
   <div class='legend'>
     <strong>Access Types:</strong>
@@ -95,7 +95,7 @@
   <div class='reg-section'>
     <h3>CTRL <small>offset 0x000, reset 0x00000000</small></h3>
     <table>
-      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th></tr>
+      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th><th>Description</th><th>Side Effect</th></tr>
       <tr>
         <td><code>EN</code></td>
         <td>[0:0]</td>
@@ -103,6 +103,8 @@
         <td><span class='badge' style='background:#4CAF50'>RW</span></td>
         <td>0x0</td>
         <td>output</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
       </tr>
       <tr>
         <td><code>MODE</code></td>
@@ -111,6 +113,8 @@
         <td><span class='badge' style='background:#4CAF50'>RW</span></td>
         <td>0x0</td>
         <td>output</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
       </tr>
       <tr>
         <td><code>RESERVED</code></td>
@@ -119,13 +123,15 @@
         <td><span class='badge' style='background:#2196F3'>RO</span></td>
         <td>0x0</td>
         <td>&mdash;</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
       </tr>
     </table>
   </div>
   <div class='reg-section'>
     <h3>STATUS <small>offset 0x004, reset 0x00000000</small></h3>
     <table>
-      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th></tr>
+      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th><th>Description</th><th>Side Effect</th></tr>
       <tr>
         <td><code>DONE</code></td>
         <td>[0:0]</td>
@@ -133,6 +139,8 @@
         <td><span class='badge' style='background:#2196F3'>RO</span></td>
         <td>0x0</td>
         <td>input</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
       </tr>
       <tr>
         <td><code>BUSY</code></td>
@@ -141,6 +149,8 @@
         <td><span class='badge' style='background:#2196F3'>RO</span></td>
         <td>0x0</td>
         <td>input</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
       </tr>
       <tr>
         <td><code>PEND</code></td>
@@ -149,13 +159,15 @@
         <td><span class='badge' style='background:#9C27B0'>RS</span></td>
         <td>0x0</td>
         <td>input</td>
+        <td>&mdash;</td>
+        <td>Set on read</td>
       </tr>
     </table>
   </div>
   <div class='reg-section'>
     <h3>INT_EN <small>offset 0x008, reset 0x00000000</small></h3>
     <table>
-      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th></tr>
+      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th><th>Description</th><th>Side Effect</th></tr>
       <tr>
         <td><code>DONE</code></td>
         <td>[0:0]</td>
@@ -163,6 +175,8 @@
         <td><span class='badge' style='background:#4CAF50'>RW</span></td>
         <td>0x0</td>
         <td>output</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
       </tr>
       <tr>
         <td><code>TIMER</code></td>
@@ -171,13 +185,15 @@
         <td><span class='badge' style='background:#4CAF50'>RW</span></td>
         <td>0x0</td>
         <td>output</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
       </tr>
     </table>
   </div>
   <div class='reg-section'>
     <h3>INT_STS <small>offset 0x00C, reset 0x00000000</small></h3>
     <table>
-      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th></tr>
+      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th><th>Description</th><th>Side Effect</th></tr>
       <tr>
         <td><code>OVERRUN</code></td>
         <td>[0:0]</td>
@@ -185,13 +201,15 @@
         <td><span class='badge' style='background:#FF9800'>W1C</span></td>
         <td>0x0</td>
         <td>input</td>
+        <td>&mdash;</td>
+        <td>Write-1-to-clear; hw sets</td>
       </tr>
     </table>
   </div>
   <div class='reg-section'>
     <h3>DMA_CTRL <small>offset 0x010, reset 0x00000000</small></h3>
     <table>
-      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th></tr>
+      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th><th>Description</th><th>Side Effect</th></tr>
       <tr>
         <td><code>START</code></td>
         <td>[0:0]</td>
@@ -199,6 +217,8 @@
         <td><span class='badge' style='background:#9C27B0'>RS</span></td>
         <td>0x0</td>
         <td>output</td>
+        <td>&mdash;</td>
+        <td>Set on read</td>
       </tr>
       <tr>
         <td><code>RSVD</code></td>
@@ -206,6 +226,8 @@
         <td>7</td>
         <td><span class='badge' style='background:#2196F3'>RO</span></td>
         <td>0x0</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
         <td>&mdash;</td>
       </tr>
       <tr>
@@ -215,13 +237,15 @@
         <td><span class='badge' style='background:#4CAF50'>RW</span></td>
         <td>0x0</td>
         <td>output</td>
+        <td>&mdash;</td>
+        <td>&mdash;</td>
       </tr>
     </table>
   </div>
   <div class='reg-section'>
     <h3>ERR_STS <small>offset 0x014, reset 0x00000003</small></h3>
     <table>
-      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th></tr>
+      <tr><th>Field</th><th>Bits</th><th>Width</th><th>Access</th><th>Reset</th><th>HW Interface</th><th>Description</th><th>Side Effect</th></tr>
       <tr>
         <td><code>PARITY</code></td>
         <td>[0:0]</td>
@@ -229,6 +253,8 @@
         <td><span class='badge' style='background:#F44336'>RC</span></td>
         <td>0x1</td>
         <td>input</td>
+        <td>&mdash;</td>
+        <td>Clear on read</td>
       </tr>
       <tr>
         <td><code>CRC_ERR</code></td>
@@ -237,6 +263,8 @@
         <td><span class='badge' style='background:#F44336'>RC</span></td>
         <td>0x1</td>
         <td>input</td>
+        <td>&mdash;</td>
+        <td>Clear on read</td>
       </tr>
     </table>
   </div>

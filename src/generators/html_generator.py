@@ -91,12 +91,17 @@ class HtmlGenerator:
             lines.append("  <div class='reg-section'>")
             lines.append(f"    <h3>{esc(reg.name)} <small>offset 0x{reg.offset:03X}, "
                          f"reset 0x{reg.reset_val:08X}</small></h3>")
+            if reg.description:
+                lines.append(f"    <p>{esc(reg.description)}</p>")
             lines.append("    <table>")
             lines.append("      <tr><th>Field</th><th>Bits</th><th>Width</th>"
-                         "<th>Access</th><th>Reset</th><th>HW Interface</th></tr>")
+                         "<th>Access</th><th>Reset</th><th>HW Interface</th>"
+                         "<th>Description</th><th>Side Effect</th></tr>")
             for field in reg.fields:
                 color = _ACCESS_COLORS.get(field.access_type, "#999")
                 hw = esc(field.hardware_interface) if field.hardware_interface else "&mdash;"
+                desc = esc(field.description) if field.description else "&mdash;"
+                side_effect = esc(field.side_effect) if field.side_effect else "&mdash;"
                 lines.append("      <tr>")
                 lines.append(f"        <td><code>{esc(field.name)}</code></td>")
                 lines.append(f"        <td>[{field.msb}:{field.lsb}]</td>")
@@ -105,6 +110,8 @@ class HtmlGenerator:
                              f"{esc(field.access_type)}</span></td>")
                 lines.append(f"        <td>0x{field.reset_val:X}</td>")
                 lines.append(f"        <td>{hw}</td>")
+                lines.append(f"        <td>{desc}</td>")
+                lines.append(f"        <td>{side_effect}</td>")
                 lines.append("      </tr>")
             lines.append("    </table>")
             lines.append("  </div>")

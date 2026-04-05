@@ -16,6 +16,7 @@ class Field:
         reset_val:   Reset (power-on) value as an integer.
         hardware_interface: "input" (hw drives field), "output" (field drives hw),
                             or None (no hardware sideband).
+        description: Free-text field description from the Excel specification.
         side_effect: Free-text description of read/write side effects.
         interrupt_role: "source", "enable", or None (for interrupt aggregation).
     """
@@ -26,6 +27,7 @@ class Field:
         self.access_type = access_type.upper()
         self.reset_val = int(reset_val)
         self.hardware_interface = hardware_interface  # "input", "output", or None
+        self.description: str = ""
         self.side_effect: str = ""
         self.interrupt_role: str | None = None
 

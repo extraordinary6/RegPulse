@@ -39,6 +39,7 @@ class JsonGenerator:
             "width": reg.width,
             "reset_val": f"0x{reg.reset_val:08X}",
             "effective_access": reg.effective_access,
+            "description": reg.description,
             "fields": [self._field_to_dict(f) for f in reg.fields],
         }
 
@@ -50,6 +51,7 @@ class JsonGenerator:
             "width": field.width,
             "access": field.access_type,
             "reset_val": field.reset_val,
+            "description": field.description,
             "hw_interface": field.hardware_interface,
             "is_bus_writable": field.is_bus_writable,
             "has_read_side_effect": field.has_read_side_effect,

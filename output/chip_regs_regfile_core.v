@@ -1,7 +1,7 @@
 // ============================================================================
 // RegPulse Auto-Generated Register File Core
 // Module   : chip_regs_regfile_core
-// Generated: 2026-04-05 15:01:36
+// Generated: 2026-04-05 18:28:09
 // ============================================================================
 module chip_regs_regfile_core #(
     parameter AW = 3,

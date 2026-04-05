@@ -1,6 +1,6 @@
 {
   "block_name": "chip_regs",
-  "generated": "2026-04-05 15:01:36",
+  "generated": "2026-04-05 18:27:43",
   "base_address": "0x00000000",
   "data_width": 32,
   "num_registers": 6,
@@ -13,6 +13,7 @@
       "width": 8,
       "reset_val": "0x00000000",
       "effective_access": "RW",
+      "description": "",
       "fields": [
         {
           "name": "EN",
@@ -21,10 +22,11 @@
           "width": 1,
           "access": "RW",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "output",
           "is_bus_writable": true,
           "has_read_side_effect": false,
-          "side_effect": "nan"
+          "side_effect": ""
         },
         {
           "name": "MODE",
@@ -33,10 +35,11 @@
           "width": 3,
           "access": "RW",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "output",
           "is_bus_writable": true,
           "has_read_side_effect": false,
-          "side_effect": "nan"
+          "side_effect": ""
         },
         {
           "name": "RESERVED",
@@ -45,10 +48,11 @@
           "width": 4,
           "access": "RO",
           "reset_val": 0,
+          "description": "",
           "hw_interface": null,
           "is_bus_writable": false,
           "has_read_side_effect": false,
-          "side_effect": "nan"
+          "side_effect": ""
         }
       ]
     },
@@ -59,6 +63,7 @@
       "width": 3,
       "reset_val": "0x00000000",
       "effective_access": "RO",
+      "description": "",
       "fields": [
         {
           "name": "DONE",
@@ -67,10 +72,11 @@
           "width": 1,
           "access": "RO",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "input",
           "is_bus_writable": false,
           "has_read_side_effect": false,
-          "side_effect": "nan"
+          "side_effect": ""
         },
         {
           "name": "BUSY",
@@ -79,10 +85,11 @@
           "width": 1,
           "access": "RO",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "input",
           "is_bus_writable": false,
           "has_read_side_effect": false,
-          "side_effect": "nan"
+          "side_effect": ""
         },
         {
           "name": "PEND",
@@ -91,6 +98,7 @@
           "width": 1,
           "access": "RS",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "input",
           "is_bus_writable": false,
           "has_read_side_effect": true,
@@ -105,6 +113,7 @@
       "width": 2,
       "reset_val": "0x00000000",
       "effective_access": "RW",
+      "description": "",
       "fields": [
         {
           "name": "DONE",
@@ -113,10 +122,11 @@
           "width": 1,
           "access": "RW",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "output",
           "is_bus_writable": true,
           "has_read_side_effect": false,
-          "side_effect": "nan"
+          "side_effect": ""
         },
         {
           "name": "TIMER",
@@ -125,10 +135,11 @@
           "width": 1,
           "access": "RW",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "output",
           "is_bus_writable": true,
           "has_read_side_effect": false,
-          "side_effect": "nan"
+          "side_effect": ""
         }
       ]
     },
@@ -139,6 +150,7 @@
       "width": 1,
       "reset_val": "0x00000000",
       "effective_access": "RW",
+      "description": "",
       "fields": [
         {
           "name": "OVERRUN",
@@ -147,6 +159,7 @@
           "width": 1,
           "access": "W1C",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "input",
           "is_bus_writable": true,
           "has_read_side_effect": false,
@@ -161,6 +174,7 @@
       "width": 16,
       "reset_val": "0x00000000",
       "effective_access": "RW",
+      "description": "",
       "fields": [
         {
           "name": "START",
@@ -169,6 +183,7 @@
           "width": 1,
           "access": "RS",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "output",
           "is_bus_writable": false,
           "has_read_side_effect": true,
@@ -181,10 +196,11 @@
           "width": 7,
           "access": "RO",
           "reset_val": 0,
+          "description": "",
           "hw_interface": null,
           "is_bus_writable": false,
           "has_read_side_effect": false,
-          "side_effect": "nan"
+          "side_effect": ""
         },
         {
           "name": "LEN",
@@ -193,10 +209,11 @@
           "width": 8,
           "access": "RW",
           "reset_val": 0,
+          "description": "",
           "hw_interface": "output",
           "is_bus_writable": true,
           "has_read_side_effect": false,
-          "side_effect": "nan"
+          "side_effect": ""
         }
       ]
     },
@@ -207,6 +224,7 @@
       "width": 2,
       "reset_val": "0x00000003",
       "effective_access": "RO",
+      "description": "",
       "fields": [
         {
           "name": "PARITY",
@@ -215,6 +233,7 @@
           "width": 1,
           "access": "RC",
           "reset_val": 1,
+          "description": "",
           "hw_interface": "input",
           "is_bus_writable": false,
           "has_read_side_effect": true,
@@ -227,6 +246,7 @@
           "width": 1,
           "access": "RC",
           "reset_val": 1,
+          "description": "",
           "hw_interface": "input",
           "is_bus_writable": false,
           "has_read_side_effect": true,

@@ -13,7 +13,7 @@ from src.models.register_bank import RegisterBank
 
 # Expected columns (case-insensitive, whitespace-tolerant)
 _REQUIRED_COLUMNS = {"name", "offset", "field", "bits", "access", "reset"}
-_OPTIONAL_COLUMNS = {"hardware trigger", "side effect", "interrupt"}
+_OPTIONAL_COLUMNS = {"hardware trigger", "side effect", "interrupt", "description"}
 
 
 def _normalise_numeric_str(s: str) -> str:
@@ -51,6 +51,12 @@ def _normalise_one(s: str) -> str:
         return s
 
 
+def _optional_text(value) -> str:
+    """Normalize optional cell text, treating NaN-like values as empty."""
+    text = str(value).strip()
+    return "" if text.lower() == "nan" else text
+
+
 class ExcelParser:
     """Parse a register-specification Excel file into a RegisterBank.
 
@@ -64,11 +70,13 @@ class ExcelParser:
     """
 
     def __init__(self, filepath: str, block_name: str = "reg_top",
-                 data_width: int = 32, base_address: int = 0):
+                 data_width: int = 32, base_address: int = 0,
+                 block_size: int | None = None):
         self.filepath = filepath
         self.block_name = block_name
         self.data_width = data_width
         self.base_address = base_address
+        self.block_size = block_size
 
     # ------------------------------------------------------------------
     def parse(self) -> RegisterBank:
@@ -89,6 +97,7 @@ class ExcelParser:
         has_hw_trigger = "hardware trigger" in df.columns
         has_side_effect = "side effect" in df.columns
         has_interrupt = "interrupt" in df.columns
+        has_description = "description" in df.columns
 
         # Group rows by register (name + offset)
         reg_map: OrderedDict[tuple[str, int], Register] = OrderedDict()
@@ -137,19 +146,24 @@ class ExcelParser:
             # Parse optional Hardware Trigger column
             hw_interface = None
             if has_hw_trigger:
-                hw_raw = str(row.get("hardware trigger", "")).strip().lower()
+                hw_raw = _optional_text(row.get("hardware trigger", "")).lower()
                 if hw_raw in ("input", "output"):
                     hw_interface = hw_raw
 
             # Parse optional Side Effect column
             side_effect = ""
             if has_side_effect:
-                side_effect = str(row.get("side effect", "")).strip()
+                side_effect = _optional_text(row.get("side effect", ""))
+
+            # Parse optional Description column
+            description = ""
+            if has_description:
+                description = _optional_text(row.get("description", ""))
 
             # Parse optional Interrupt column
             interrupt_role = None
             if has_interrupt:
-                irq_raw = str(row.get("interrupt", "")).strip().lower()
+                irq_raw = _optional_text(row.get("interrupt", "")).lower()
                 if irq_raw in ("source", "enable"):
                     interrupt_role = irq_raw
 
@@ -170,12 +184,17 @@ class ExcelParser:
                 ) from exc
 
             field.side_effect = side_effect
+            field.description = description
             field.interrupt_role = interrupt_role
             reg.add_field(field)
+            if description and not reg.description:
+                reg.description = description
 
         bank = RegisterBank(self.block_name,
                             data_width=self.data_width,
-                            base_address=self.base_address)
+                            base_address=self.base_address,
+                            block_size=self.block_size)
+        bank.source_columns = set(df.columns)
         for reg in reg_map.values():
             bank.add_register(reg)
 

@@ -28,6 +28,7 @@ from src.generators.c_header_generator import CHeaderGenerator
 from src.generators.json_generator import JsonGenerator
 from src.generators.html_generator import HtmlGenerator
 from src.generators.markdown_generator import MarkdownGenerator
+from src.lint import Linter, LintSeverity
 
 logger = logging.getLogger("regpulse")
 
@@ -49,7 +50,7 @@ def setup_logging(verbose: bool = False):
     logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
 
 
-def main():
+def main(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(
         description="RegPulse — Generate Verilog register cores, optional bus wrappers, UVM RAL, C headers, JSON, HTML, and Markdown from Excel register specs.",
     )
@@ -63,6 +64,8 @@ def main():
                         help="Name for the register block / module (default: reg_top).")
     parser.add_argument("--base_address", default="0x0",
                         help="Base address for the register map (default: 0x0).")
+    parser.add_argument("--block_size", default=None,
+                        help="Optional declared block size for lint checks, e.g. 0x100.")
     parser.add_argument("--data_width", type=int, default=32,
                         help="Register data width in bits (default: 32).")
     parser.add_argument("--format", default=None,
@@ -76,11 +79,15 @@ def main():
                         help="Generate a blank Excel template file and exit.")
     parser.add_argument("--dry_run", action="store_true",
                         help="Parse and validate only; print summary without generating files.")
+    parser.add_argument("--lint", action="store_true",
+                        help="Run advisory lint checks and print findings.")
+    parser.add_argument("--lint_strict", action="store_true",
+                        help="When linting, treat warnings as build failures.")
     parser.add_argument("--bus", default="none", choices=["none", "apb", "ahb", "axi"],
                         help="Bus protocol wrapper to generate (default: none).")
     parser.add_argument("--verbose", "-v", action="store_true",
                         help="Enable verbose (DEBUG-level) logging output.")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     setup_logging(args.verbose)
 
@@ -120,11 +127,21 @@ def main():
     except (ValueError, TypeError):
         parser.error(f"Invalid base address: '{args.base_address}'")
 
+    block_size = None
+    if args.block_size is not None:
+        try:
+            block_size = int(args.block_size, 0)
+        except (ValueError, TypeError):
+            parser.error(f"Invalid block size: '{args.block_size}'")
+        if block_size <= 0:
+            parser.error("--block_size must be a positive integer.")
+
     # 1. Parse
     logger.info("Parsing Excel: %s", args.input_excel)
     excel_parser = ExcelParser(args.input_excel, block_name=args.block_name,
                                data_width=args.data_width,
-                               base_address=base_address)
+                               base_address=base_address,
+                               block_size=block_size)
     bank = excel_parser.parse()
     logger.info("Parsed %d register(s), address space = %d bytes.",
                 bank.num_registers, bank.address_space)
@@ -134,6 +151,19 @@ def main():
     validator = Validator(bank)
     validator.validate()
     logger.info("Validation passed.")
+
+    if args.lint or args.lint_strict:
+        logger.info("Running lint checks ...")
+        lint_findings = Linter(bank).lint()
+        _report_lint(logger, lint_findings)
+        if any(f.severity == LintSeverity.ERROR for f in lint_findings):
+            logger.error("Lint failed with error-level findings.")
+            sys.exit(4)
+        if args.lint_strict and any(f.severity == LintSeverity.WARNING for f in lint_findings):
+            logger.error("Strict lint failed due to warning-level findings.")
+            sys.exit(5)
+        if not lint_findings:
+            logger.info("Lint passed with no findings.")
 
     # Dry run: print summary and exit
     if args.dry_run:
@@ -193,6 +223,22 @@ def _print_summary(bank):
     print(f"{'=' * 60}\n")
 
 
+def _report_lint(logger, findings):
+    severity_fn = {
+        LintSeverity.INFO: logger.info,
+        LintSeverity.WARNING: logger.warning,
+        LintSeverity.ERROR: logger.error,
+    }
+    for finding in findings:
+        severity_fn[finding.severity](
+            "Lint %s [%s] %s: %s",
+            finding.severity.value.upper(),
+            finding.rule_id,
+            finding.location,
+            finding.message,
+        )
+
+
 def _generate_template(output_dir: str, data_width: int = 32):
     """Generate a blank Excel template with data validation."""
     import pandas as pd
@@ -207,7 +253,7 @@ def _generate_template(output_dir: str, data_width: int = 32):
     ws.title = "Registers"
 
     headers = ["Name", "Offset", "Field", "Bits", "Access", "Reset",
-               "Hardware Trigger", "Side Effect", "Interrupt"]
+               "Description", "Hardware Trigger", "Side Effect", "Interrupt"]
     ws.append(headers)
 
     # Style header row
@@ -228,7 +274,7 @@ def _generate_template(output_dir: str, data_width: int = 32):
         errorTitle="Invalid Access Type",
         error="Must be one of: RW, RO, W1C, RC, RS, WO, W1S, W0C"
     )
-    dv_access.add(f"E2:E1000")
+    dv_access.add("E2:E1000")
     ws.add_data_validation(dv_access)
 
     # Data validation for Hardware Trigger column
@@ -240,7 +286,7 @@ def _generate_template(output_dir: str, data_width: int = 32):
         errorTitle="Invalid HW Interface",
         error='Must be "input", "output", or left blank.'
     )
-    dv_hw.add(f"G2:G1000")
+    dv_hw.add("H2:H1000")
     ws.add_data_validation(dv_hw)
 
     # Data validation for Interrupt column
@@ -252,7 +298,7 @@ def _generate_template(output_dir: str, data_width: int = 32):
         errorTitle="Invalid Interrupt Role",
         error='Must be "source", "enable", or left blank.'
     )
-    dv_irq.add(f"I2:I1000")
+    dv_irq.add("J2:J1000")
     ws.add_data_validation(dv_irq)
 
     # Set column widths
@@ -262,20 +308,22 @@ def _generate_template(output_dir: str, data_width: int = 32):
     ws.column_dimensions["D"].width = 10
     ws.column_dimensions["E"].width = 10
     ws.column_dimensions["F"].width = 10
-    ws.column_dimensions["G"].width = 18
-    ws.column_dimensions["H"].width = 24
-    ws.column_dimensions["I"].width = 12
+    ws.column_dimensions["G"].width = 28
+    ws.column_dimensions["H"].width = 18
+    ws.column_dimensions["I"].width = 24
+    ws.column_dimensions["J"].width = 12
 
     # Add a sample row
-    ws.append(["MY_REG", "0x00", "ENABLE", "0", "RW", "0", "output", "", ""])
+    ws.append(["MY_REG", "0x00", "ENABLE", "0", "RW", "0", "Enable bit", "output", "", ""])
 
     wb.save(out_path)
     logger.info("Template written: %s", out_path)
 
 
-if __name__ == "__main__":
+def run(argv: list[str] | None = None):
+    """Run the CLI and convert known errors into process exit codes."""
     try:
-        main()
+        main(argv)
     except ValueError as exc:
         logger.error("Parse error: %s", exc)
         sys.exit(1)
@@ -289,3 +337,7 @@ if __name__ == "__main__":
         logger.critical("Unexpected error: %s", exc)
         traceback.print_exc()
         sys.exit(99)
+
+
+if __name__ == "__main__":
+    run()

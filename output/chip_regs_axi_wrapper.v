@@ -1,7 +1,7 @@
 // ============================================================================
 // RegPulse Auto-Generated AXI4-Lite Wrapper
 // Module   : chip_regs_axi_wrapper
-// Generated: 2026-04-05 15:01:36
+// Generated: 2026-04-05 18:28:09
 // ============================================================================
 module chip_regs_axi_wrapper (
     // AXI4-Lite Global
@@ -64,16 +64,20 @@ module chip_regs_axi_wrapper (
     // Write Address Channel
     // ========================================================================
     reg  awaddr_sel;
+    reg  [31:0] awaddr_reg;
     wire awaddr_done = awvalid && awready;
     assign awready = awvalid && !awaddr_sel;
 
     always @(posedge aclk or negedge aresetn) begin
-        if (!aresetn)
+        if (!aresetn) begin
             awaddr_sel <= 1'b0;
-        else if (awaddr_done)
+            awaddr_reg <= 32'd0;
+        end else if (awaddr_done) begin
             awaddr_sel <= 1'b1;
-        else if (core_wen)
+            awaddr_reg <= awaddr;
+        end else if (core_wen) begin
             awaddr_sel <= 1'b0;
+        end
     end
 
     // ========================================================================
@@ -112,16 +116,20 @@ module chip_regs_axi_wrapper (
     // Read Address Channel
     // ========================================================================
     reg ar_sel;
+    reg [31:0] araddr_reg;
     wire ar_done = arvalid && arready;
     assign arready = arvalid && !ar_sel;
 
     always @(posedge aclk or negedge aresetn) begin
-        if (!aresetn)
+        if (!aresetn) begin
             ar_sel <= 1'b0;
-        else if (ar_done)
+            araddr_reg <= 32'd0;
+        end else if (ar_done) begin
             ar_sel <= 1'b1;
-        else if (core_ren)
+            araddr_reg <= araddr;
+        end else if (core_ren) begin
             ar_sel <= 1'b0;
+        end
     end
 
     // ========================================================================
@@ -149,11 +157,12 @@ module chip_regs_axi_wrapper (
     // ========================================================================
     // AXI -> Core interface mapping
     // ========================================================================
-    assign core_addr  = awaddr[4:2];
+    assign core_addr  = core_wen ? awaddr_reg[4:2]
+                                 : araddr_reg[4:2];
     assign core_wdata = wdata;
     assign core_wstrb = wstrb;
     assign core_wen   = awaddr_sel && wdata_sel;
-    assign core_ren   = ar_sel;
+    assign core_ren   = ar_sel && !core_wen;
 
     // ========================================================================
     // Core instance

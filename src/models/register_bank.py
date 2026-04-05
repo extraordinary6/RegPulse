@@ -13,10 +13,13 @@ class RegisterBank:
         registers:    Ordered list of Register objects.
     """
 
-    def __init__(self, name: str, data_width: int = 32, base_address: int = 0):
+    def __init__(self, name: str, data_width: int = 32, base_address: int = 0,
+                 block_size: int | None = None):
         self.name = name
         self.data_width = data_width
         self.base_address = base_address
+        self.block_size = block_size
+        self.source_columns: set[str] = set()
         self.registers: list[Register] = []
 
     def add_register(self, reg: Register) -> None:

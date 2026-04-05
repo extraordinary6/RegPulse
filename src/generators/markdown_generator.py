@@ -64,18 +64,23 @@ class MarkdownGenerator:
         for reg in self.bank.registers:
             lines.append(f"### {reg.name}")
             lines.append("")
+            if reg.description:
+                lines.append(reg.description)
+                lines.append("")
             lines.append(f"- **Offset**: 0x{reg.offset:03X}")
             lines.append(f"- **Width**: {reg.width} bits")
             lines.append(f"- **Reset**: 0x{reg.reset_val:08X}")
             lines.append(f"- **Access**: {reg.effective_access}")
             lines.append("")
-            lines.append("| Field | Bits | Width | Access | Reset | HW Interface |")
-            lines.append("|-------|------|-------|--------|-------|--------------|")
+            lines.append("| Field | Bits | Width | Access | Reset | HW Interface | Description | Side Effect |")
+            lines.append("|-------|------|-------|--------|-------|--------------|-------------|-------------|")
             for field in reg.fields:
                 hw = field.hardware_interface or "-"
+                desc = field.description or "-"
+                side_effect = field.side_effect or "-"
                 lines.append(f"| {field.name} | [{field.msb}:{field.lsb}] | "
                              f"{field.width} | {field.access_type} | "
-                             f"0x{field.reset_val:X} | {hw} |")
+                             f"0x{field.reset_val:X} | {hw} | {desc} | {side_effect} |")
             lines.append("")
 
         out_path = os.path.join(output_dir, f"{self.bank.name}.md")

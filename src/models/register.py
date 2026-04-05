@@ -16,6 +16,7 @@ class Register:
         self.name = name
         self.offset = int(offset)
         self.data_width = data_width
+        self.description: str = ""
         self.fields: list[Field] = []
 
         byte_align = data_width // 8

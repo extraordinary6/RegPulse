@@ -1,7 +1,7 @@
 // ============================================================================
 // RegPulse Auto-Generated APB4 Wrapper
 // Module   : chip_regs_apb_wrapper
-// Generated: 2026-04-05 14:59:55
+// Generated: 2026-04-05 18:27:52
 // ============================================================================
 module chip_regs_apb_wrapper (
     // APB4 Interface

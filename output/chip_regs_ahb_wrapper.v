@@ -1,7 +1,7 @@
 // ============================================================================
 // RegPulse Auto-Generated AHB-Lite Wrapper
 // Module   : chip_regs_ahb_wrapper
-// Generated: 2026-04-05 15:01:35
+// Generated: 2026-04-05 18:28:00
 // ============================================================================
 module chip_regs_ahb_wrapper (
     // AHB-Lite Interface
