@@ -1,0 +1,109 @@
+// ============================================================================
+// RegPulse Auto-Generated UVM RAL Model
+// Block    : {{ block_name }}_reg_block
+// Generated: {{ timestamp }}
+// ============================================================================
+`ifndef {{ block_name | upper }}_REG_BLOCK_SV
+`define {{ block_name | upper }}_REG_BLOCK_SV
+
+class {{ block_name }}_reg_block extends uvm_reg_block;
+
+    `uvm_object_utils({{ block_name }}_reg_block)
+
+    // ========================================================================
+    // Register declarations
+    // ========================================================================
+{% for reg in registers %}
+{% if reg.effective_access == "RW" %}
+    rand {{ block_name }}_{{ reg.name }}_reg {{ reg.name }};
+{% else %}
+    {{ block_name }}_{{ reg.name }}_reg {{ reg.name }};
+{% endif %}
+{% endfor %}
+
+    // ========================================================================
+    // Constructor
+    // ========================================================================
+    function new(string name = "{{ block_name }}_reg_block");
+        super.new(name, UVM_NO_COVERAGE);
+    endfunction
+
+    // ========================================================================
+    // build()
+    // ========================================================================
+    virtual function void build();
+{% for reg in registers %}
+        {{ reg.name }} = {{ block_name }}_{{ reg.name }}_reg::type_id::create("{{ reg.name }}");
+        {{ reg.name }}.configure(this, null, "{{ reg.name }}");
+        {{ reg.name }}.build();
+{% endfor %}
+    endfunction
+
+    // ========================================================================
+    // set_default_map - caller should assign base address
+    // ========================================================================
+    function void set_default_map(uvm_reg_map map);
+        this.default_map = map;
+        this.default_map.set_base_addr('h0);
+{% for reg in registers %}
+        this.default_map.add_reg({{ reg.name }}, 32'h{{ "%03X" | format(reg.offset) }}, "{{ reg.effective_access }}");
+{% endfor %}
+    endfunction
+
+endclass
+
+// ============================================================================
+// Individual Register Classes
+// ============================================================================
+
+{% for reg in registers %}
+class {{ block_name }}_{{ reg.name }}_reg extends uvm_reg;
+
+    `uvm_object_utils({{ block_name }}_{{ reg.name }}_reg)
+
+{% for field in reg.fields %}
+{% if field.access_type == "RW" %}
+    rand uvm_reg_field {{ field.name }};
+{% else %}
+    uvm_reg_field {{ field.name }};
+{% endif %}
+{% endfor %}
+
+    function new(string name = "{{ reg.name }}");
+        super.new(name, 32, UVM_NO_COVERAGE);
+    endfunction
+
+    virtual function void build();
+{% for field in reg.fields %}
+        {{ field.name }} = uvm_reg_field::type_id::create("{{ field.name }}");
+        {{ field.name }}.configure(
+            .parent(this),
+            .size({{ field.width }}),
+            .lsb_pos({{ field.lsb }}),
+            .access("{{ field.access_type }}"),
+            .volatile({{ 1 if field.access_type in ("W1C", "W1S", "W0C", "RC", "RS", "WO") or field.hardware_interface == "input" else 0 }}),
+            .reset({{ field.reset_val }}),
+            .has_reset(1),
+            .is_rand({{ 1 if field.access_type == "RW" else 0 }})
+        );
+{% endfor %}
+{% set _any_hdl = [] %}{% for _f in reg.fields %}{% if _f.hardware_interface %}{% if _any_hdl.append(1) %}{% endif %}{% endif %}{% endfor %}
+{% if _any_hdl %}
+        // Backdoor path mapping
+{% for field in reg.fields %}
+{% if field.hardware_interface %}
+{% if field.hardware_interface == "input" %}
+        add_hdl_path_slice("{{ reg.name | lower }}_{{ field.name | lower }}_st", {{ field.lsb }}, {{ field.width }});
+{% else %}
+        add_hdl_path_slice("{{ reg.name | lower }}[{{ field.msb }}:{{ field.lsb }}]", {{ field.lsb }}, {{ field.width }});
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
+    endfunction
+
+endclass
+
+{% endfor %}
+
+`endif // {{ block_name | upper }}_REG_BLOCK_SV

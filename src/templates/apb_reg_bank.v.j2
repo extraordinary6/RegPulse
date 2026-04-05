@@ -1,0 +1,153 @@
+// ============================================================================
+// RegPulse Auto-Generated APB Register Bank
+// Module   : {{ module_name }}
+// Generated: {{ timestamp }}
+// ============================================================================
+module {{ module_name }} (
+    // APB Interface
+    input  wire        pclk,
+    input  wire        presetn,
+    input  wire [31:0] paddr,
+    input  wire        psel,
+    input  wire        penable,
+    input  wire        pwrite,
+    input  wire [31:0] pwdata,
+    output reg  [31:0] prdata,
+    output wire        pready{% set _has_hw = namespace(val=false) %}{% for _r in registers %}{% for _f in _r.fields %}{% if _f.hardware_interface %}{% set _has_hw.val = true %}{% endif %}{% endfor %}{% endfor %}{% if _has_hw.val %},
+    // Hardware Interface
+{% set _hw_ports = [] %}{% for reg in registers %}{% for field in reg.fields %}{% if field.hardware_interface == "output" %}{% if _hw_ports.append("output wire [" + (field.msb|string) + ":" + (field.lsb|string) + "] " + reg.name|lower + "_" + field.name|lower + "_q") %}{% endif %}{% endif %}{% if field.hardware_interface == "input" %}{% if _hw_ports.append("input  wire [" + (field.msb|string) + ":" + (field.lsb|string) + "] " + reg.name|lower + "_" + field.name|lower + "_st") %}{% endif %}{% endif %}{% endfor %}{% endfor %}
+{% for _port in _hw_ports %}    {{ _port }}{{ "," if not loop.last else "" }}
+{% endfor %}{% endif %}
+{% set _has_irq = namespace(val=false) %}{% if interrupt_pairs %}{% set _has_irq.val = true %}{% endif %}{% if _has_irq.val %},
+    // Interrupt
+    output wire        irq_o
+{% endif %}
+);
+
+    assign pready = 1'b1;
+
+    // ========================================================================
+    // Register declarations
+    // ========================================================================
+{% for reg in registers %}
+    reg [31:0] {{ reg.name }}; // offset 0x{{ "%03X" | format(reg.offset) }}
+{% endfor %}
+
+{% set _any_out = namespace(val=false) %}{% for _r in registers %}{% for _f in _r.fields %}{% if _f.hardware_interface == "output" %}{% set _any_out.val = true %}{% endif %}{% endfor %}{% endfor %}
+{% if _any_out.val %}
+    // ========================================================================
+    // Hardware output assignments
+    // ========================================================================
+{% for reg in registers %}{% for field in reg.fields %}
+{% if field.hardware_interface == "output" %}
+    assign {{ reg.name | lower }}_{{ field.name | lower }}_q = {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}];
+{% endif %}
+{% endfor %}{% endfor %}
+{% endif %}
+
+{% if _has_irq.val %}
+    // ========================================================================
+    // Interrupt aggregation
+    // ========================================================================
+    assign irq_o = |(
+{% for src_field, src_reg, en_field, en_reg in interrupt_pairs %}
+        ({{ src_reg.name }}[{{ src_field.msb }}:{{ src_field.lsb }}] & {{ en_reg.name }}[{{ en_field.msb }}:{{ en_field.lsb }}]){{ "," if not loop.last else "" }}
+{% endfor %}
+    );
+{% endif %}
+
+    // ========================================================================
+    // Reset
+    // ========================================================================
+    always @(posedge pclk or negedge presetn) begin
+        if (!presetn) begin
+{% for reg in registers %}
+            {{ reg.name }} <= 32'h{{ "%08X" | format(reg.reset_val) }};
+{% endfor %}
+            prdata <= 32'h0;
+        end
+    end
+
+{% set _any_hw_in = namespace(val=false) %}{% for _r in registers %}{% for _f in _r.fields %}{% if _f.hardware_interface == "input" %}{% set _any_hw_in.val = true %}{% endif %}{% endfor %}{% endfor %}
+{% if _any_hw_in.val %}
+    // ========================================================================
+    // Hardware Input Synchronization
+    // ========================================================================
+    always @(posedge pclk) begin
+        if (presetn) begin
+{% for reg in registers %}{% set _reg_hw_in = namespace(val=false) %}{% for _f in reg.fields %}{% if _f.hardware_interface == "input" %}{% set _reg_hw_in.val = true %}{% endif %}{% endfor %}{% if _reg_hw_in.val %}
+            // {{ reg.name }} hw input capture
+{% for field in reg.fields %}{% if field.hardware_interface == "input" %}
+{% if field.access_type == "RO" %}
+            {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] <= {{ reg.name | lower }}_{{ field.name | lower }}_st;
+{% elif field.access_type in ("W1C", "RC", "RS") %}
+            {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] <= {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] | {{ reg.name | lower }}_{{ field.name | lower }}_st;
+{% endif %}
+{% endif %}{% endfor %}
+{% endif %}{% endfor %}
+        end
+    end
+{% endif %}
+
+    // ========================================================================
+    // APB Write
+    // ========================================================================
+    always @(posedge pclk) begin
+        if (presetn && psel && penable && pwrite) begin
+            case (paddr[{{ addr_msb }}:2])
+{% for reg in registers %}
+{% set _has_write = namespace(val=false) %}{% for _f in reg.fields %}{% if _f.access_type in ("RW", "W1C", "WO", "W1S", "W0C") %}{% set _has_write.val = true %}{% endif %}{% endfor %}
+{% if _has_write.val %}
+                {{ "%d" | format(reg.offset // 4) }}: begin
+{% for field in reg.fields %}
+{% if field.access_type == "RW" %}
+                    {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] <= pwdata[{{ field.msb }}:{{ field.lsb }}];
+{% elif field.access_type == "WO" %}
+                    {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] <= pwdata[{{ field.msb }}:{{ field.lsb }}];
+{% elif field.access_type == "W1C" %}
+                    {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] <= {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] & ~pwdata[{{ field.msb }}:{{ field.lsb }}];
+{% elif field.access_type == "W1S" %}
+                    {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] <= {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] | pwdata[{{ field.msb }}:{{ field.lsb }}];
+{% elif field.access_type == "W0C" %}
+                    {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] <= {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] & pwdata[{{ field.msb }}:{{ field.lsb }}];
+{% endif %}
+{% endfor %}
+                end
+{% endif %}
+{% endfor %}
+                default: ;
+            endcase
+        end
+    end
+
+    // ========================================================================
+    // APB Read (with merged Read-Clear / Read-Set)
+    // ========================================================================
+    always @(posedge pclk) begin
+        if (presetn && psel && penable && !pwrite) begin
+            case (paddr[{{ addr_msb }}:2])
+{% for reg in registers %}
+{% set _reg_has_special = namespace(val=false) %}{% for _f in reg.fields %}{% if _f.access_type in ("RC", "RS", "WO") %}{% set _reg_has_special.val = true %}{% endif %}{% endfor %}
+{% if _reg_has_special.val %}
+                {{ "%d" | format(reg.offset // 4) }}: begin
+                    prdata <= {{ reg.name }};
+{% for field in reg.fields %}
+{% if field.access_type == "RC" %}
+                    {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] <= {{ field.width }}'d0;
+{% elif field.access_type == "RS" %}
+                    {{ reg.name }}[{{ field.msb }}:{{ field.lsb }}] <= {{ field.width }}'d{{ field.width | ones }};
+{% elif field.access_type == "WO" %}
+                    prdata[{{ field.msb }}:{{ field.lsb }}] <= {{ field.width }}'d0;
+{% endif %}
+{% endfor %}
+                end
+{% else %}
+                {{ "%d" | format(reg.offset // 4) }}: prdata <= {{ reg.name }};
+{% endif %}
+{% endfor %}
+                default: prdata <= 32'h0;
+            endcase
+        end
+    end
+
+endmodule
