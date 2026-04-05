@@ -1,0 +1,82 @@
+// ============================================================================
+// RegPulse Auto-Generated APB4 Wrapper
+// Module   : {{ module_name }}_apb_wrapper
+// Generated: {{ timestamp }}
+// ============================================================================
+module {{ module_name }}_apb_wrapper (
+    // APB4 Interface
+    input  wire        pclk,
+    input  wire        presetn,
+    input  wire [31:0] paddr,
+    input  wire        psel,
+    input  wire        penable,
+    input  wire        pwrite,
+    input  wire [31:0] pwdata,
+    input  wire [3:0]  pstrb,
+    output wire [31:0] prdata,
+    output wire        pready,
+    output wire        pslverr{% set _has_hw = namespace(val=false) %}{% for _r in registers %}{% for _f in _r.fields %}{% if _f.hardware_interface %}{% set _has_hw.val = true %}{% endif %}{% endfor %}{% endfor %}{% if _has_hw.val %},
+    // Hardware Interface
+{% set _hw_ports = [] %}{% for reg in registers %}{% for field in reg.fields %}{% if field.hardware_interface == "output" %}{% if _hw_ports.append("output wire [" + (field.msb|string) + ":" + (field.lsb|string) + "] " + reg.name|lower + "_" + field.name|lower + "_q") %}{% endif %}{% endif %}{% if field.hardware_interface == "input" %}{% if _hw_ports.append("input  wire [" + (field.msb|string) + ":" + (field.lsb|string) + "] " + reg.name|lower + "_" + field.name|lower + "_st") %}{% endif %}{% endif %}{% endfor %}{% endfor %}
+{% for _port in _hw_ports %}    {{ _port }}{{ "," if not loop.last else "" }}
+{% endfor %}{% endif %}
+{% set _has_irq = namespace(val=false) %}{% if interrupt_pairs %}{% set _has_irq.val = true %}{% endif %}{% if _has_irq.val %},
+    // Interrupt
+    output wire        irq_o
+{% endif %}
+);
+
+    // ========================================================================
+    // Internal signals
+    // ========================================================================
+    wire [{{ addr_width }}-1:0] core_addr;
+    wire [{{ data_width }}-1:0] core_wdata;
+    wire        core_wen;
+    wire [{{ strb_width }}-1:0] core_wstrb;
+    wire        core_ren;
+    wire [{{ data_width }}-1:0] core_rdata;
+    wire        core_ready;
+
+    // ========================================================================
+    // Read stall state
+    // ========================================================================
+    reg read_pending;
+
+    always @(posedge pclk or negedge presetn) begin
+        if (!presetn) begin
+            read_pending <= 1'b0;
+        end else begin
+            if (read_pending && core_ready) begin
+                read_pending <= 1'b0;
+            end else if (psel && penable && !pwrite && !read_pending) begin
+                read_pending <= 1'b1;
+            end
+        end
+    end
+
+    // ========================================================================
+    // APB → Core interface mapping
+    // ========================================================================
+    assign core_addr  = paddr[{{ addr_width + 1 }}:2];
+    assign core_wdata = pwdata[{{ data_width - 1 }}:0];
+    assign core_wstrb = pstrb[{{ strb_width - 1 }}:0];
+    assign core_wen   = psel && penable && pwrite && !read_pending;
+    assign core_ren   = psel && penable && !pwrite && !read_pending;
+    assign pready     = (psel && penable && pwrite && !read_pending) ||
+                        (read_pending && core_ready);
+    assign prdata     = core_rdata;
+    assign pslverr    = 1'b0;
+
+    // ========================================================================
+    // Core instance
+    // ========================================================================
+{% set _core_conns = [] %}{% if _core_conns.append("        .clk        (pclk)") %}{% endif %}{% if _core_conns.append("        .rst_n      (presetn)") %}{% endif %}{% if _core_conns.append("        .addr       (core_addr)") %}{% endif %}{% if _core_conns.append("        .wdata      (core_wdata)") %}{% endif %}{% if _core_conns.append("        .wen        (core_wen)") %}{% endif %}{% if _core_conns.append("        .wstrb      (core_wstrb)") %}{% endif %}{% if _core_conns.append("        .ren        (core_ren)") %}{% endif %}{% if _core_conns.append("        .rdata      (core_rdata)") %}{% endif %}{% if _core_conns.append("        .ready      (core_ready)") %}{% endif %}{% for reg in registers %}{% for field in reg.fields %}{% if field.hardware_interface == "output" %}{% if _core_conns.append("        ." + reg.name|lower + "_" + field.name|lower + "_q (" + reg.name|lower + "_" + field.name|lower + "_q)") %}{% endif %}{% endif %}{% if field.hardware_interface == "input" %}{% if _core_conns.append("        ." + reg.name|lower + "_" + field.name|lower + "_st (" + reg.name|lower + "_" + field.name|lower + "_st)") %}{% endif %}{% endif %}{% endfor %}{% endfor %}{% if _has_irq.val %}{% if _core_conns.append("        .irq_o      (irq_o)") %}{% endif %}{% endif %}
+    {{ module_name }}_regfile_core #(
+        .AW({{ addr_width }}),
+        .DW({{ data_width }})
+    ) u_regfile_core (
+{% for _conn in _core_conns %}{{ _conn }}{{ "," if not loop.last else "" }}
+{% endfor %}
+    );
+
+endmodule

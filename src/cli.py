@@ -20,6 +20,7 @@ from src import __version__
 from src.parser.excel_parser import ExcelParser
 from src.validators.validator import Validator, ValidationError
 from src.generators.rtl_generator import RtlGenerator
+from src.generators.apb_wrapper_generator import ApbWrapperGenerator
 from src.generators.uvm_generator import UvmGenerator
 from src.generators.c_header_generator import CHeaderGenerator
 from src.generators.json_generator import JsonGenerator
@@ -48,7 +49,7 @@ def setup_logging(verbose: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="RegPulse — Generate APB Verilog, UVM RAL, C headers, JSON, HTML, and Markdown from Excel register specs.",
+        description="RegPulse — Generate Verilog register cores, optional bus wrappers, UVM RAL, C headers, JSON, HTML, and Markdown from Excel register specs.",
     )
     parser.add_argument("--version", action="version",
                         version=f"%(prog)s {__version__}")
@@ -73,6 +74,8 @@ def main():
                         help="Generate a blank Excel template file and exit.")
     parser.add_argument("--dry_run", action="store_true",
                         help="Parse and validate only; print summary without generating files.")
+    parser.add_argument("--bus", default="none", choices=["none", "apb"],
+                        help="Bus protocol wrapper to generate (default: none).")
     parser.add_argument("--verbose", "-v", action="store_true",
                         help="Enable verbose (DEBUG-level) logging output.")
     args = parser.parse_args()
@@ -144,6 +147,13 @@ def main():
         gen = gen_cls(bank)
         path = gen.generate(args.output_dir)
         logger.info("Written: %s", path)
+
+    # 4. Optional bus wrapper
+    if args.bus == "apb":
+        logger.info("Generating APB4 wrapper ...")
+        apb_gen = ApbWrapperGenerator(bank)
+        apb_path = apb_gen.generate(args.output_dir)
+        logger.info("Written: %s", apb_path)
 
     logger.info("Done.")
 

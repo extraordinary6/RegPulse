@@ -1,19 +1,21 @@
 // ============================================================================
-// RegPulse Auto-Generated APB Register Bank
-// Module   : chip_regs
-// Generated: 2026-04-05 12:38:41
+// RegPulse Auto-Generated Register File Core
+// Module   : chip_regs_regfile_core
+// Generated: 2026-04-05 13:51:41
 // ============================================================================
-module chip_regs (
-    // APB Interface
-    input  wire        pclk,
-    input  wire        presetn,
-    input  wire [31:0] paddr,
-    input  wire        psel,
-    input  wire        penable,
-    input  wire        pwrite,
-    input  wire [31:0] pwdata,
-    output reg  [31:0] prdata,
-    output wire        pready,
+module chip_regs_regfile_core #(
+    parameter AW = 3,
+    parameter DW = 32
+) (
+    input  wire             clk,
+    input  wire             rst_n,
+    input  wire [AW-1:0]    addr,
+    input  wire [DW-1:0]    wdata,
+    input  wire             wen,
+    input  wire [strb_width-1:0] wstrb,
+    input  wire             ren,
+    output wire [DW-1:0]    rdata,
+    output wire             ready,
     // Hardware Interface
     output wire [0:0] ctrl_en_q,
     output wire [3:1] ctrl_mode_q,
@@ -29,17 +31,24 @@ module chip_regs (
     input  wire [1:1] err_sts_crc_err_st
 );
 
-    assign pready = 1'b1;
+    // ========================================================================
+    // Read data & ready registers
+    // ========================================================================
+    reg [DW-1:0] rdata_reg;
+    reg          ready_reg;
+
+    assign rdata = rdata_reg;
+    assign ready = ready_reg;
 
     // ========================================================================
     // Register declarations
     // ========================================================================
-    reg [31:0] CTRL; // offset 0x000
-    reg [31:0] STATUS; // offset 0x004
-    reg [31:0] INT_EN; // offset 0x008
-    reg [31:0] INT_STS; // offset 0x00C
-    reg [31:0] DMA_CTRL; // offset 0x010
-    reg [31:0] ERR_STS; // offset 0x014
+    reg [DW-1:0] CTRL; // offset 0x000
+    reg [DW-1:0] STATUS; // offset 0x004
+    reg [DW-1:0] INT_EN; // offset 0x008
+    reg [DW-1:0] INT_STS; // offset 0x00C
+    reg [DW-1:0] DMA_CTRL; // offset 0x010
+    reg [DW-1:0] ERR_STS; // offset 0x014
 
     // ========================================================================
     // Hardware output assignments
@@ -55,23 +64,24 @@ module chip_regs (
     // ========================================================================
     // Reset
     // ========================================================================
-    always @(posedge pclk or negedge presetn) begin
-        if (!presetn) begin
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
             CTRL <= 32'h00000000;
             STATUS <= 32'h00000000;
             INT_EN <= 32'h00000000;
             INT_STS <= 32'h00000000;
             DMA_CTRL <= 32'h00000000;
             ERR_STS <= 32'h00000003;
-            prdata <= 32'h0;
+            rdata_reg <= 32'h00000000;
+            ready_reg <= 1'b0;
         end
     end
 
     // ========================================================================
     // Hardware Input Synchronization
     // ========================================================================
-    always @(posedge pclk) begin
-        if (presetn) begin
+    always @(posedge clk) begin
+        if (rst_n) begin
             // STATUS hw input capture
             STATUS[0:0] <= status_done_st;
             STATUS[1:1] <= status_busy_st;
@@ -85,24 +95,30 @@ module chip_regs (
     end
 
     // ========================================================================
-    // APB Write
+    // Write (with byte-strobe masking)
     // ========================================================================
-    always @(posedge pclk) begin
-        if (presetn && psel && penable && pwrite) begin
-            case (paddr[4:2])
+    always @(posedge clk) begin
+        if (rst_n && wen) begin
+            case (addr[2:0])
                 0: begin
-                    CTRL[0:0] <= pwdata[0:0];
-                    CTRL[3:1] <= pwdata[3:1];
+                    if (wstrb[0:0] != 1'd0)
+                        CTRL[0:0] <= wdata[0:0];
+                    if (wstrb[0:0] != 1'd0)
+                        CTRL[3:1] <= wdata[3:1];
                 end
                 2: begin
-                    INT_EN[0:0] <= pwdata[0:0];
-                    INT_EN[1:1] <= pwdata[1:1];
+                    if (wstrb[0:0] != 1'd0)
+                        INT_EN[0:0] <= wdata[0:0];
+                    if (wstrb[0:0] != 1'd0)
+                        INT_EN[1:1] <= wdata[1:1];
                 end
                 3: begin
-                    INT_STS[0:0] <= INT_STS[0:0] & ~pwdata[0:0];
+                    if (wstrb[0:0] != 1'd0)
+                        INT_STS[0:0] <= INT_STS[0:0] & ~wdata[0:0];
                 end
                 4: begin
-                    DMA_CTRL[15:8] <= pwdata[15:8];
+                    if (wstrb[1:1] != 1'd0)
+                        DMA_CTRL[15:8] <= wdata[15:8];
                 end
                 default: ;
             endcase
@@ -110,29 +126,32 @@ module chip_regs (
     end
 
     // ========================================================================
-    // APB Read (with merged Read-Clear / Read-Set)
+    // Read (with merged Read-Clear / Read-Set)
     // ========================================================================
-    always @(posedge pclk) begin
-        if (presetn && psel && penable && !pwrite) begin
-            case (paddr[4:2])
-                0: prdata <= CTRL;
+    always @(posedge clk) begin
+        if (rst_n && ren) begin
+            ready_reg <= 1'b1;
+            case (addr[2:0])
+                0: rdata_reg <= CTRL;
                 1: begin
-                    prdata <= STATUS;
+                    rdata_reg <= STATUS;
                     STATUS[2:2] <= 1'd1;
                 end
-                2: prdata <= INT_EN;
-                3: prdata <= INT_STS;
+                2: rdata_reg <= INT_EN;
+                3: rdata_reg <= INT_STS;
                 4: begin
-                    prdata <= DMA_CTRL;
+                    rdata_reg <= DMA_CTRL;
                     DMA_CTRL[0:0] <= 1'd1;
                 end
                 5: begin
-                    prdata <= ERR_STS;
+                    rdata_reg <= ERR_STS;
                     ERR_STS[0:0] <= 1'd0;
                     ERR_STS[1:1] <= 1'd0;
                 end
-                default: prdata <= 32'h0;
+                default: rdata_reg <= 32'h00000000;
             endcase
+        end else begin
+            ready_reg <= 1'b0;
         end
     end
 

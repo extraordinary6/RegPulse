@@ -36,7 +36,7 @@ def test_rc_rs_merged_into_read_block(sample_bank):
     assert "Read-Clear (RC) logic" not in code
     assert "Read-Set (RS) logic" not in code
     # Merged into read block
-    assert "APB Read (with merged Read-Clear / Read-Set)" in code
+    assert "Read (with merged Read-Clear / Read-Set)" in code
     # RC clear inside read case
     assert "ERR_STS[0:0] <= 1'd0" in code
     assert "ERR_STS[1:1] <= 1'd0" in code
@@ -52,17 +52,17 @@ def test_w1c_write_no_hw_or(sample_bank):
         with open(path) as f:
             code = f.read()
 
-    assert "| int_sts_overrun_st" not in code.split("APB Write")[1].split("APB Read")[0]
+    assert "| int_sts_overrun_st" not in code.split("Write (with byte-strobe")[1].split("Read (with merged")[0]
 
 
-def test_prdata_reset(sample_bank):
+def test_rdata_reset(sample_bank):
     gen = RtlGenerator(sample_bank)
     with tempfile.TemporaryDirectory() as tmpdir:
         path = gen.generate(tmpdir)
         with open(path) as f:
             code = f.read()
 
-    assert "prdata <= 32'h0" in code
+    assert "rdata_reg <= 32'h0" in code
 
 
 def test_hw_output_assignments(sample_bank):
@@ -141,13 +141,88 @@ def test_wo_w1s_w0c_access_types():
         with open(path) as f:
             code = f.read()
 
-    write_section = code.split("APB Write")[1].split("APB Read")[0]
+    write_section = code.split("Write (with byte-strobe")[1].split("Read (with merged")[0]
     # WO: same as RW
-    assert "WO_REG[0:0] <= pwdata[0:0]" in write_section
-    # W1S: reg | pwdata
-    assert "WO_REG[1:1] <= WO_REG[1:1] | pwdata[1:1]" in write_section
-    # W0C: reg & pwdata
-    assert "WO_REG[2:2] <= WO_REG[2:2] & pwdata[2:2]" in write_section
+    assert "WO_REG[0:0] <= wdata[0:0]" in write_section
+    # W1S: reg | wdata
+    assert "WO_REG[1:1] <= WO_REG[1:1] | wdata[1:1]" in write_section
+    # W0C: reg & wdata
+    assert "WO_REG[2:2] <= WO_REG[2:2] & wdata[2:2]" in write_section
     # WO read returns 0
-    read_section = code.split("APB Read")[1]
-    assert "prdata[0:0] <= 1'd0" in read_section
+    read_section = code.split("Read (with merged")[1]
+    assert "rdata_reg[0:0] <= 1'd0" in read_section
+
+
+def test_module_name_has_regfile_core(sample_bank):
+    """Generated module name should end with _regfile_core."""
+    gen = RtlGenerator(sample_bank)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = gen.generate(tmpdir)
+        with open(path) as f:
+            code = f.read()
+
+    assert "module test_top_regfile_core" in code
+
+
+def test_generic_interface_signals(sample_bank):
+    """Core should use generic interface signals, not APB signals."""
+    gen = RtlGenerator(sample_bank)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = gen.generate(tmpdir)
+        with open(path) as f:
+            code = f.read()
+
+    # Generic signals present
+    assert "input  wire             clk," in code
+    assert "input  wire             rst_n," in code
+    assert "input  wire             wen," in code
+    assert "input  wire             ren," in code
+    assert "output wire             ready" in code
+    assert "output wire [DW-1:0]    rdata," in code
+    # No APB signals
+    assert "pclk" not in code
+    assert "psel" not in code
+    assert "penable" not in code
+    assert "pwrite" not in code
+    assert "prdata" not in code
+    assert "pready" not in code
+
+
+def test_wstrb_masking(sample_bank):
+    """Write path should include wstrb checks."""
+    gen = RtlGenerator(sample_bank)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = gen.generate(tmpdir)
+        with open(path) as f:
+            code = f.read()
+
+    write_section = code.split("Write (with byte-strobe")[1].split("Read (with merged")[0]
+    assert "wstrb[0:0] != 1'd0" in write_section
+
+
+def test_read_ready_timing(sample_bank):
+    """Read should use ready_reg and rdata_reg for 1-cycle latency."""
+    gen = RtlGenerator(sample_bank)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = gen.generate(tmpdir)
+        with open(path) as f:
+            code = f.read()
+
+    assert "ready_reg <= 1'b1" in code
+    assert "ready_reg <= 1'b0" in code
+    assert "rdata = rdata_reg" in code
+    assert "ready = ready_reg" in code
+
+
+def test_addr_is_word_address(sample_bank):
+    """Address should use word addressing (no byte shift)."""
+    gen = RtlGenerator(sample_bank)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = gen.generate(tmpdir)
+        with open(path) as f:
+            code = f.read()
+
+    # Should be case (addr[...]), not case (paddr[...:2])
+    assert "case (addr[" in code
+    # No paddr references
+    assert "paddr" not in code

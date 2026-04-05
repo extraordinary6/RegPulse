@@ -1,6 +1,6 @@
 {
   "block_name": "chip_regs",
-  "generated": "2026-04-05 12:38:41",
+  "generated": "2026-04-05 13:51:41",
   "base_address": "0x00000000",
   "data_width": 32,
   "num_registers": 6,

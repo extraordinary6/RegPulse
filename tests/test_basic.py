@@ -22,6 +22,7 @@ def test_full_flow_with_sample_excel(sample_excel):
         # RTL
         rtl_gen = RtlGenerator(bank)
         rtl_path = rtl_gen.generate(tmpdir)
+        assert rtl_path.endswith("_regfile_core.v")
         with open(rtl_path) as f:
             rtl_code = f.read()
 
@@ -53,7 +54,7 @@ def test_full_flow_with_sample_excel(sample_excel):
 
         # Phase 1 bug fix assertions
         assert "Hardware Input Synchronization" in rtl_code
-        assert "APB Read (with merged Read-Clear / Read-Set)" in rtl_code
+        assert "Read (with merged Read-Clear / Read-Set)" in rtl_code
         assert "Read-Clear (RC) logic" not in rtl_code
 
         # UVM hdl_path uses _st for inputs

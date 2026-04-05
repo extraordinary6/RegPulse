@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "regpulse"
-version = "0.3.0"
+version = "0.4.0"
 description = "Generate synthesizable Verilog register banks and UVM RAL models from Excel specs"
 readme = "README.md"
 license = {text = "MIT"}
